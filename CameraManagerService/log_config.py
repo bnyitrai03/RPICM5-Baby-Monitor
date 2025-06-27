@@ -1,4 +1,3 @@
-import logging
 from logging.config import dictConfig
 
 def setup_logging():
@@ -22,7 +21,14 @@ def setup_logging():
             },
         },
         "loggers": {
-            "CameraManagerAPI": {"handlers": ["default"], "level": "INFO", "propagate": False},
+            # App loggers
+            "CameraConfigAPI": {"handlers": ["default"], "level": "INFO", "propagate": False},
+            "V4L2Commands": {"handlers": ["default"], "level": "INFO", "propagate": False},
+            "CameraManager": {"handlers": ["default"], "level": "INFO", "propagate": False},
+            "Camera": {"handlers": ["default"], "level": "INFO", "propagate": False},
+            # Uvicorn loggers
+            "uvicorn": {"handlers": ["default"], "level": "INFO", "propagate": False},
+            "uvicorn.error": {"handlers": ["default"], "level": "INFO", "propagate": False},
             "uvicorn.access": {"handlers": ["default"], "level": "INFO", "propagate": False},
         },
     }

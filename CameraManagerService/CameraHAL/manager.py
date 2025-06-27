@@ -23,7 +23,7 @@ class CameraManager:
         for i, (cam_path, cam_name) in enumerate(zip(discovered_paths, discovered_names, strict=True), 1):
             cam_id = f"cam{i}"
             camera = Camera(cam_id, cam_path, cam_name)
-            if not camera.controls and not camera.formats:
+            if not camera.controls or not camera.formats:
                 logger.error(f"{cam_id} controls or formats is missing")
                 continue
 
