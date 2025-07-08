@@ -112,7 +112,8 @@ def default_all_controls(device_path: str) -> List[str]:
         for control in cam.controls.values():
             try:
                 if V4L2ControlFlags.INACTIVE in V4L2ControlFlags(control.flags):
-                    raise Exception(f"{control.name} has inactive flag")
+                    logger.warning(f"{control.name} didn't change due to inactive flag")
+                    continue
                 else:
                     control.set_to_default()
             except Exception as err:

@@ -13,3 +13,11 @@ class StreamSettings(BaseModel):
     fps: int
     width: int
     height: int
+
+# Create a global shared singleton to share state
+_manager_storage = {
+    "manager": None
+}
+
+def get_manager_storage():
+    return _manager_storage

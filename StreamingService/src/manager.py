@@ -15,6 +15,7 @@ class StreamManager:
         height=1080
     )):
         self.settings: StreamSettings = stream_settings
+        self.processes: List[subprocess.Popen] = []
         
         if CamType(self.settings.cam) is CamType.CAMR1:
             self.proxy_vdev = "/dev/video10"   # Virtual device for the full stereo feed
@@ -46,8 +47,6 @@ class StreamManager:
         # Check if stream is already running!!!    
 
         logger.info(f"Starting stream for {self.settings.cam} on internal port {self.port}")
-        processes: List[subprocess.Popen] = []
-
         try:
             # --- Command 1: ffmpeg to proxy the raw camera to a virtual device ---
             cmd_proxy = [
@@ -58,9 +57,9 @@ class StreamManager:
             ]
             logger.info(cmd_proxy)
             proc_proxy = subprocess.Popen(cmd_proxy, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            processes.append(proc_proxy)
+            self.processes.append(proc_proxy)
             logger.info(f"Started ffmpeg proxy: PID {proc_proxy.pid}")
-            time.sleep(0.5)
+            time.sleep(0.4)
 
             # --- Command 2: ffmpeg to split the stereo feed into mono feed ---
             mono_width = int(self.settings.width / 2)
@@ -81,9 +80,9 @@ class StreamManager:
             ]
             logger.info(cmd_split)
             proc_split = subprocess.Popen(cmd_split, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            processes.append(proc_split)
+            self.processes.append(proc_split)
             logger.info(f"Started ffmpeg split: PID {proc_split.pid}")
-            time.sleep(0.5)
+            time.sleep(0.4)
 
             # --- Commands 3: ustreamer for remote stream ---
             cmd_ustreamer = [
@@ -93,7 +92,7 @@ class StreamManager:
             ]
             logger.info(cmd_ustreamer)
             proc_ustreamer = subprocess.Popen(cmd_ustreamer, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            processes.append(proc_ustreamer)
+            self.processes.append(proc_ustreamer)
             logger.info(f"Started ustreamer on port {self.port}: PID {proc_ustreamer.pid}")
 
             return f"http://rpicm5/stream/{self.settings.cam}/stream"
@@ -101,28 +100,26 @@ class StreamManager:
         except Exception as e:
             logger.error(f"FAILED to start stream. Cleaning up processes. Error: {e}")
             # If anything fails, terminate all processes
-            for p in processes:
+            for p in self.processes:
                 p.terminate()
                 p.wait()
             raise RuntimeError(f"Failed to start stream for {self.settings.cam}")
 
-    def stop_stream(self, cam_id: CamType) -> Dict[str, Any]:
-        """Stops all the processes related to the stream."""
-        active_streams = []
-        if cam_id not in active_streams:
-            logger.warning(f"Stream for {cam_id} is not running.")
-            return {"status": "not_found", "message": f"Stream {cam_id} not found."}
 
-        logger.info(f"Stopping stream for {cam_id}...")
-        """  stream_info = active_streams.pop(cam_id)
-        # Terminate processes in reverse order of creation
-        for p in reversed(stream_info["processes"]):
+    def stop_stream(self) -> str:
+        """Stops all the processes related to the stream."""
+        if not self.processes:
+            raise RuntimeError("No running processes to stop.")
+
+        logger.info(f"Stopping stream for {self.settings.cam}")
+
+        for p in self.processes:
             try:
                 p.terminate()
-                p.wait(timeout=2) # Wait 2 seconds for graceful shutdown
-                logger.info(f"[{cam_id}] Terminated process PID {p.pid}")
-            except subprocess.TimeoutExpired:
-                p.kill() # Force kill if it doesn't terminate
-                logger.warning(f"[{cam_id}] Force-killed process PID {p.pid}") """
+                p.wait()
+                logger.info(f"Terminated process PID: {p.pid}")
+            except Exception as e:
+                logger.warning(f"Failed to terminate process: {e}")
         
-        return {"status": "stopped", "message": f"Stream {cam_id} stopped successfully."}
+        self.processes.clear()
+        return f"Stopped stream for {self.settings.cam}"
