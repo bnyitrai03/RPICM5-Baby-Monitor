@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import MagicMock
 from src.streaming_api import app, get_manager_storage
 from src.models import StreamSettings, CamType
+from src.streaming_api import StreamManager
 
 client = TestClient(app)
 
@@ -17,7 +18,7 @@ def override_manager_storage():
     def get_test_manager_storage():
         return test_storage
 
-    # Override the real dependency with our test one
+    # Override the real dependency with a test one
     app.dependency_overrides[get_manager_storage] = get_test_manager_storage
     yield
     app.dependency_overrides.clear()
@@ -39,7 +40,6 @@ def test_start_stream_success(mocker, settings):
 
     assert response.status_code == 200
     assert response.json() == "http://fake.stream/url"
-    from src.streaming_api import StreamManager
     StreamManager.assert_called_once_with(StreamSettings(**settings))
     mock_stream_manager.start_stream.assert_called_once()
 

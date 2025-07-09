@@ -2,13 +2,13 @@ import logging
 from fastapi import FastAPI, HTTPException, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Any, List
-from .CameraLL.manager import CameraManager
+from .manager import CameraManager
 from .log_config import setup_logging
 
 setup_logging()
 logger = logging.getLogger("CameraConfigAPI")
 
-# python3 -m uvicorn CameraManagerService.config_api:app --host 127.0.0.1 --port 8000
+# python3 -m uvicorn src.config_api:app --host 127.0.0.1 --port 8000
 app = FastAPI(
     title="Camera Configuration API",
     description="An API to discover and configure V4L2 cameras."

@@ -5,7 +5,7 @@ from enum import IntFlag
 from linuxpy.video.device import(
     Device,
     MenuControl, 
-    IntegerControl, 
+    IntegerControl,
     BooleanControl
 )
 
