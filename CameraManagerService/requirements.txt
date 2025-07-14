@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 linuxpy
-pytest
-pytest-cov
-pytest-mock
-httpx
+# pytest
+# pytest-cov
+# pytest-mock
+# httpx

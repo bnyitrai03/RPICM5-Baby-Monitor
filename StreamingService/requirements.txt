@@ -1,5 +1,2 @@
 fastapi
 uvicorn
-pytest
-pytest-cov
-pytest-mock
