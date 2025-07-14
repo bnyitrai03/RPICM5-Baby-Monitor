@@ -20,7 +20,7 @@ def get_device_paths_and_names() -> Tuple[List[str], List[str]]:
         return [],[]
     
     # Device names are dependant on USB port!
-    device_names = [p for p in os.listdir(V4L_BY_PATH) if 'video-index0' in p and p.startswith('platform-xhci-hcd.1-usb-')]
+    device_names = [p for p in os.listdir(V4L_BY_PATH) if p.startswith('platform-xhci-hcd.') and 'video-index0' in p]
     device_paths = sorted([os.path.join(V4L_BY_PATH, f) for f in device_names])
     return device_paths, device_names
 

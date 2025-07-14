@@ -1,7 +1,7 @@
 import logging
 import subprocess
 import time
-from typing import Dict, Any, List
+from typing import List
 from .models import StreamSettings, CamType
 
 logger = logging.getLogger("StreamManager")
@@ -42,9 +42,10 @@ class StreamManager:
     
 
     def start_stream(self) -> str:
-        """Starts streaming processes for the cam in settings.
-            Returns the stream url."""
-        # Check if stream is already running!!!    
+        """
+        Starts streaming processes for the cam in settings.
+        Returns the stream url.
+        """    
 
         logger.info(f"Starting stream for {self.settings.cam} on internal port {self.port}")
         try:
@@ -94,8 +95,9 @@ class StreamManager:
             proc_ustreamer = subprocess.Popen(cmd_ustreamer, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self.processes.append(proc_ustreamer)
             logger.info(f"Started ustreamer on port {self.port}: PID {proc_ustreamer.pid}")
+            self._log_subprocess_errors()
 
-            return f"http://rpicm5/stream/{self.settings.cam}/stream"
+            return f"https://rpicm5/stream/{self.settings.cam}/stream"
 
         except Exception as e:
             logger.error(f"FAILED to start stream. Cleaning up processes. Error: {e}")
@@ -116,10 +118,32 @@ class StreamManager:
         for p in self.processes:
             try:
                 p.terminate()
-                p.wait()
+                p.wait(5)
                 logger.info(f"Terminated process PID: {p.pid}")
             except Exception as e:
                 logger.warning(f"Failed to terminate process: {e}")
         
         self.processes.clear()
         return f"Stopped stream for {self.settings.cam}"
+    
+    
+    def _log_subprocess_errors(self):
+        """
+        Check all running processes and log any errors.
+        """
+        for i, process in enumerate(self.processes):
+            process_name = f"Process-{i}"
+            
+            # Check if process has died
+            if process.poll() is not None:
+                returncode = process.returncode
+                if returncode != 0:
+                    logger.error(f"{process_name} (PID {process.pid}) died with return code {returncode}")
+                    
+                    # Try to read any error output
+                    try:
+                        stderr_output = process.stderr.read().decode('utf-8', errors='ignore')
+                        if stderr_output.strip():
+                            logger.error(f"{process_name} stderr: {stderr_output}")
+                    except:
+                        logger.error(f"Could not read stderr from {process_name}")
