@@ -1,2 +1,4 @@
 EasyMCP2221
 hidapi
+fastapi
+uvicorn
