@@ -24,6 +24,7 @@ def setup_logging():
             # App loggers
             "LightSensor": {"handlers": ["default"], "level": "INFO", "propagate": False},
             "TempSensor": {"handlers": ["default"], "level": "INFO", "propagate": False},
+            "SensorController": {"handlers": ["default"], "level": "INFO", "propagate": False},
             # Uvicorn loggers
             "uvicorn": {"handlers": ["default"], "level": "INFO", "propagate": False},
             "uvicorn.error": {"handlers": ["default"], "level": "INFO", "propagate": False},

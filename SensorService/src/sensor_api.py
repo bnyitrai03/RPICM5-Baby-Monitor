@@ -1,22 +1,28 @@
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
 from .log_config import setup_logging
+from .sensor_controller import SensorController
+from .models import SensorData
 
 setup_logging()
 logger = logging.getLogger("StreamingAPI")
 
-# python3 -m uvicorn src.streaming_api:app --host 127.0.0.1 --port 8001
+# Initialize singleton and start monitoring
+sensor_controller = SensorController()
+sensor_controller.start_monitoring()
+
+# python3 -m uvicorn src.sensor_api:app --host 127.0.0.1 --port 8001
 app = FastAPI(
     title="Sensor Manager API",
     description="An API to monitor the sensor values."
 )
 
 
-@app.get("/light", response_model=str)
-def get_lux_value():
-    return ""
+@app.get("/", response_model=SensorData)
+def get_sensor_values():
+    return sensor_controller.get_sensor_data()
 
-
-@app.get("/temperature", response_model=str)
-def get_temp_value():
-    return ""
+@app.patch("/lux_threshold") 
+def set_lux_threshold_value(new_threshold: int = Body(...)):
+   return sensor_controller.set_lux_threshold(new_threshold)
+   
