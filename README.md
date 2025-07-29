@@ -29,12 +29,14 @@ Get current sensor readings and configuration.
 }
 ```
 
-### PATCH `/lux_threshold`
+### PUT `/lux_threshold`
 Update the light threshold value for LED control.
 
 **Request Body:**
 ```json
-150
+{
+  "threshold": 150
+}
 ```
 
 **Response:**
@@ -121,7 +123,7 @@ Get detailed information for a specific camera.
 }
 ```
 
-### PATCH `/cameras/{cam_id}/controls`
+### PUT `/cameras/{cam_id}/controls`
 Update camera control values.
 
 **Parameters:**
@@ -147,7 +149,7 @@ Update camera control values.
 }
 ```
 
-### PATCH `/cameras/{cam_id}/reset`
+### PUT `/cameras/{cam_id}/reset`
 Reset all camera controls to their default values.
 
 **Parameters:**
@@ -185,7 +187,7 @@ Start a camera stream with specified settings.
 "https://rpicm5/stream/caml1/stream"
 ```
 
-### PATCH `/stop`
+### PUT `/stop`
 Stop the currently running stream.
 
 **Response:**
