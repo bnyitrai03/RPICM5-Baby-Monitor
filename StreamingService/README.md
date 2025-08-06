@@ -58,7 +58,7 @@ Start a camera stream with specified settings.
 
 #### Stop Stream
 
-**PATCH** `/stop`
+**PUT** `/stop`
 
 Stop the currently running stream.
 

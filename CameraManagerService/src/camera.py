@@ -23,7 +23,7 @@ class Camera:
         """Fetches the camera's current controls and formats from the device."""
         camera_data = {
             "id": self.id,
-            "name": self.name,
+            "path": self.path,
             "controls": self.controls,
             "formats": self.formats
         }

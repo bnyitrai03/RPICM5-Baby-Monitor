@@ -106,13 +106,13 @@ def set_control(device_path: str, control_name: str, value: Any) -> bool:
             return False
 
 def default_all_controls(device_path: str) -> List[str]:
-    """Sets all controls to default values"""
+    """Sets all controls to default values, handling control dependencies"""
     failed_to_set : List[str] = []
     with Device(device_path) as cam:
         for control in cam.controls.values():
             try:
-                if V4L2ControlFlags.INACTIVE in V4L2ControlFlags(control.flags):
-                    logger.warning(f"{control.name} didn't change due to inactive flag")
+                # Skip these since default auto values
+                if control.name == "Exposure Time, Absolute" or control.name == "White Balance Temperature":
                     continue
                 else:
                     control.set_to_default()
@@ -120,6 +120,51 @@ def default_all_controls(device_path: str) -> List[str]:
                 logger.error(f"{control.name} didn't default: {str(err)}")
                 failed_to_set.append(control.name)
     return failed_to_set
+
+
+""" def default_all_controls(device_path: str) -> List[str]:
+    failed_to_set: List[str] = []
+    
+    with Device(device_path) as cam:
+        auto_controls = []
+        manual_controls = []
+        
+        for control in cam.controls.values():
+            if any(keyword in control.name.lower() for keyword in 
+                   ['auto', 'automatic']):
+                auto_controls.append(control)
+                logger.info(f"Auto controls: {auto_controls}")
+            else:
+                manual_controls.append(control)
+        
+        # Reset automatic controls first
+        for control in auto_controls:
+            try:
+                if V4L2ControlFlags.INACTIVE in V4L2ControlFlags(control.flags):
+                    logger.warning(f"{control.name} didn't change due to inactive flag")
+                    continue
+                control.set_to_default()
+                logger.info(f"Reset automatic control: {control.name}")
+            except Exception as err:
+                logger.error(f"{control.name} didn't default: {str(err)}")
+                failed_to_set.append(control.name)
+        
+        import time
+        time.sleep(0.5)
+        
+        # Reset manual controls
+        for control in manual_controls:
+            try:
+                if V4L2ControlFlags.INACTIVE in V4L2ControlFlags(control.flags):
+                    logger.warning(f"{control.name} didn't change due to inactive flag")
+                    continue
+                control.set_to_default()
+                logger.info(f"Reset manual control: {control.name}")
+            except Exception as err:
+                logger.error(f"{control.name} didn't default: {str(err)}")
+                failed_to_set.append(control.name)
+    
+    return failed_to_set """
     
     
 # ---------- Helper Functions ---------------------

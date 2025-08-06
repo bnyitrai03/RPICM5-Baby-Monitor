@@ -15,6 +15,7 @@ app = FastAPI(
 )
 
 class ControlData(BaseModel):
+    cam_id: str
     controls: Dict[str, Any]
 
 def get_camera_manager():
@@ -38,7 +39,7 @@ def get_camera_data(cam_id: str, manager: CameraManager = Depends(get_camera_man
     return camera.get_data()
 
 
-@app.patch("/{cam_id}/reset", summary="Resets all controls to default values", response_model=str)
+@app.put("/{cam_id}/reset", summary="Resets all controls to default values", response_model=ControlData)
 def reset_camera(cam_id: str, manager: CameraManager = Depends(get_camera_manager)):
     """Finds a camera by its ID and resets its controls to their default values."""
     camera = manager.get_camera_by_id(cam_id)
@@ -50,10 +51,10 @@ def reset_camera(cam_id: str, manager: CameraManager = Depends(get_camera_manage
     if failed_to_reset:
         raise HTTPException(status_code=500, detail=f"Failed to reset controls: {failed_to_reset}")
     else:
-        return f"'{cam_id}' controls have been reset to default."
+        return {"cam_id": cam_id, "controls": camera.controls}
 
 
-@app.patch("/{cam_id}/controls", summary="Change the controls of a specific camera", response_model=str)
+@app.put("/{cam_id}/controls", summary="Change the controls of a specific camera", response_model=ControlData)
 def update_camera_controls(cam_id: str, control_update: ControlData, manager: CameraManager = Depends(get_camera_manager)):
     """Update the given camera's control values"""
     camera = manager.get_camera_by_id(cam_id)
@@ -68,4 +69,4 @@ def update_camera_controls(cam_id: str, control_update: ControlData, manager: Ca
     if failed_to_update:
         raise HTTPException(status_code=500, detail=f"These controls couldn't be updated: {failed_to_update}")
     else:
-        return f"'{cam_id}' controls have been updated."
+        return {"cam_id": cam_id, "controls": camera.controls}

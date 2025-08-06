@@ -1,8 +1,8 @@
 import logging
-from fastapi import FastAPI, Body
+from fastapi import FastAPI
 from .log_config import setup_logging
 from .sensor_controller import SensorController
-from .models import SensorData
+from .models import SensorData, LuxThreshold
 
 setup_logging()
 logger = logging.getLogger("StreamingAPI")
@@ -22,7 +22,7 @@ app = FastAPI(
 def get_sensor_values():
     return sensor_controller.get_sensor_data()
 
-@app.patch("/lux_threshold") 
-def set_lux_threshold_value(new_threshold: int = Body(...)):
-   return sensor_controller.set_lux_threshold(new_threshold)
+@app.put("/lux_threshold") 
+def set_lux_threshold_value(new_lux: LuxThreshold):
+   return sensor_controller.set_lux_threshold(new_lux.threshold)
    

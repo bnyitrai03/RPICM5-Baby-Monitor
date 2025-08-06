@@ -17,7 +17,7 @@ app = FastAPI(
 def start_stream(settings: StreamSettings, manager_storage = Depends(get_manager_storage)):
     """Configure and start the streaming processes for a specific camera."""
     if manager_storage["manager"] is not None:
-        raise HTTPException(status_code=400, detail="A stream is already running.")
+        stop_stream(manager_storage)
 
     stream_manager = StreamManager(settings)
     try:
@@ -28,7 +28,7 @@ def start_stream(settings: StreamSettings, manager_storage = Depends(get_manager
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.patch("/stop", response_model=str)
+@app.put("/stop", response_model=str)
 def stop_stream(manager_storage = Depends(get_manager_storage)):
     stream_manager: StreamManager = manager_storage["manager"]
     if stream_manager is None:
