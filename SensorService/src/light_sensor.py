@@ -5,8 +5,7 @@ logger = logging.getLogger("LightSensor")
 
 class LightSensor():
     """VEML7700 Light Sensor"""
-    
-    # Constants
+
     ADDR = 0x10
     CMD_ALS_CONF_0 = 0x00
     CMD_ALS_DATA = 0x04
@@ -18,7 +17,11 @@ class LightSensor():
     def __init__(self, mcp_device: EasyMCP2221.Device):
         self.mcp = mcp_device
         self.sensor = self.mcp.I2C_Slave(addr=self.ADDR, speed=400000)
-        self._configure()
+        
+        config_word = (self.ALS_GAIN_x1 << 11) | (self.ALS_IT_100ms << 6) | self.ALS_POWER_ON
+        config_bytes = config_word.to_bytes(2, 'little')
+        self.sensor.write_register(self.CMD_ALS_CONF_0, config_bytes)
+        logger.info(f"VEML7700 initialized at address 0x{self.ADDR:02x}")
 
     
     def read(self) -> float:
@@ -32,11 +35,4 @@ class LightSensor():
         
         except Exception as e:
             logger.error(f"Error reading light sensor: {e}")
-            self._configure()
             raise
-    
-    def _configure(self) -> None:
-        config_word = (self.ALS_GAIN_x1 << 11) | (self.ALS_IT_100ms << 6) | self.ALS_POWER_ON
-        config_bytes = config_word.to_bytes(2, 'little')
-        self.sensor.write_register(self.CMD_ALS_CONF_0, config_bytes)
-        logger.info(f"VEML7700 initialized at address 0x{self.ADDR:02x}")

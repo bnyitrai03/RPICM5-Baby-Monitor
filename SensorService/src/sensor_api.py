@@ -1,5 +1,5 @@
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from .log_config import setup_logging
 from .sensor_controller import SensorController
 from .models import SensorData, LuxThreshold
@@ -20,6 +20,8 @@ app = FastAPI(
 
 @app.get("/", response_model=SensorData)
 def get_sensor_values():
+    if sensor_controller.mcp is None:
+        raise HTTPException(status_code=500, detail=f"Sensors are not connected")
     return sensor_controller.get_sensor_data()
 
 @app.put("/lux_threshold") 

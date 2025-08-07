@@ -23,19 +23,15 @@ class SensorController:
 
 
     def __init__(self):
-        if self._initialized:
-            return
-            
-        self.mcp = EasyMCP2221.Device()
-        self.mcp.set_pin_function(gp3="GPIO_OUT")
+        self.mcp = None
+        self.light = None
+        self.temp = None
+        self._initialize_hardware()
         
-        self.light = LightSensor(self.mcp)
-        self.temp = TempSensor(self.mcp)
-        
+        self.hysteresis = 10
+        self.dac_on = False
         self.data = SensorData()
         self.data_lock = threading.Lock()
-        
-        self._initialized = True
        
        
     def get_sensor_data(self) -> SensorData:
@@ -60,6 +56,18 @@ class SensorController:
         monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
         monitor_thread.start()
 
+
+    def _initialize_hardware(self) -> None:
+        try: 
+            self.mcp = EasyMCP2221.Device()
+            self.mcp.set_pin_function(gp3="DAC")
+            self.mcp.DAC_config(ref="VDD")
+            
+            self.light = LightSensor(self.mcp)
+            self.temp = TempSensor(self.mcp)
+        except Exception as e:
+            logger.error(f"Error reseting the hardware: {e}")
+            self.mcp = None
  
     def _monitor_loop(self) -> None:
         """Continuous monitoring and controling loop"""
@@ -68,11 +76,14 @@ class SensorController:
                 luminosity = self.light.read()
                 temperature = self.temp.read()
                 
-                # Control LED
-                #if luminosity < self.data.lux_threshold:
-                    #self.mcp.GPIO_write(gp3=True)
-                #else:
-                    #self.mcp.GPIO_write(gp3=False)
+                if self.dac_on:
+                    if luminosity > self.data.lux_threshold + self.hysteresis:
+                        self.mcp.DAC_write(0, norm=True)
+                        self.dac_on = False
+                else:
+                    if luminosity < self.data.lux_threshold:
+                        self.mcp.DAC_write(0.5, norm=True)
+                        self.dac_on = True
                 
                 with self.data_lock:
                     self.data.lux_value = luminosity
@@ -81,6 +92,8 @@ class SensorController:
                 
             except Exception as e:
                 logger.error(f"Error in the sensor monitor loop: {e}")
+                self._initialize_hardware()
+                time.sleep(3)
             
             finally:
                 time.sleep(1)
