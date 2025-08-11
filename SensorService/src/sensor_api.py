@@ -2,7 +2,7 @@ import logging
 from fastapi import FastAPI, HTTPException
 from .log_config import setup_logging
 from .sensor_controller import SensorController
-from .models import SensorData, LuxThreshold
+from .models import SensorData, LuxThreshold, LedBrightness
 
 setup_logging()
 logger = logging.getLogger("StreamingAPI")
@@ -24,7 +24,10 @@ def get_sensor_values():
         raise HTTPException(status_code=500, detail=f"Sensors are not connected")
     return sensor_controller.get_sensor_data()
 
-@app.put("/lux_threshold") 
+@app.put("/lux_threshold", response_model=str) 
 def set_lux_threshold_value(new_lux: LuxThreshold):
    return sensor_controller.set_lux_threshold(new_lux.threshold)
-   
+
+@app.put("/led_brightness", response_model=str)
+def set_led_brightness(new_brightness: LedBrightness):
+    return sensor_controller.set_led_brightness(new_brightness.brightness)
