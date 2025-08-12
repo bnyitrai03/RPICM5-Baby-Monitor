@@ -1,6 +1,7 @@
 import logging
 import subprocess
 import time
+import os
 from typing import List
 from .models import StreamSettings, CamType
 
@@ -96,8 +97,9 @@ class StreamManager:
             self.processes.append(proc_ustreamer)
             logger.info(f"Started ustreamer on port {self.port}: PID {proc_ustreamer.pid}")
             self._log_subprocess_errors()
-
-            return f"https://rpicm5/stream/{self.settings.cam}/stream"
+            
+            hostname = os.uname().nodename
+            return f"https://{hostname}/stream/{self.settings.cam}/stream"
 
         except Exception as e:
             logger.error(f"FAILED to start stream. Cleaning up processes. Error: {e}")
