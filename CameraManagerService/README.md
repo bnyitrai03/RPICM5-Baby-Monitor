@@ -8,7 +8,7 @@ A FastAPI-based service for discovering, managing, and configuring V4L2 cameras 
 - **Real-time Configuration**: Adjust camera controls (brightness, contrast, exposure, etc.) in real-time
 - **Format Support**: Query supported pixel formats, resolutions, and frame rates
 - **Control Management**: View current control values, ranges, and reset to defaults
-- **RESTful API**: Clean HTTP endpoints for integration with other applications
+- **RESTful API**: Clean HTTPS endpoints for integration with other applications
 
 ## Usage
 
@@ -18,11 +18,9 @@ A FastAPI-based service for discovering, managing, and configuring V4L2 cameras 
 python3 -m uvicorn CameraManagerService.config_api:app --host 127.0.0.1 --port 8000
 ```
 
-The API will be available through **nginx**.
-
 ## API Endpoints
 
-### GET `/cameras`
+### GET `/`
 Lists all connected cameras with their full capabilities.
 
 **Response**: Array of camera objects with ID, name, controls, and supported formats.
@@ -30,7 +28,7 @@ Lists all connected cameras with their full capabilities.
 [
   {
     "id": "cam1",
-    "name": "platform-xhci-hcd.1-usb-0:1.3:1.0-video-index0",
+    "path": "/dev/v4l/by-path/platform-xhci-hcd.1-usb-0:1.3:1.0-video-index0",
     "controls": {
       "brightness": {
         "value": 0,
@@ -44,13 +42,11 @@ Lists all connected cameras with their full capabilities.
     },
     "formats": {
       "YUYV": {
-        "3840x1080": [
-          1
-        ],
-        "1600x600": [
-          10,
-          5
-        ]
+        "3840x1080": [1],
+        "1600x600": [10, 5]
+      },
+      "MJPEG" : {
+        "3840x1080": [60, 30, 15, 10]
       }
     }
   },
@@ -60,7 +56,7 @@ Lists all connected cameras with their full capabilities.
 ]
 ```
 
-### GET `/cameras/{cam_id}`
+### GET `/{cam_id}`
 Get detailed information for a specific camera.
 
 **Parameters**:
@@ -70,33 +66,31 @@ Get detailed information for a specific camera.
 ```json
 {
   "id": "cam1",
-  "name": "platform-xhci-hcd.1-usb-0:1.3:1.0-video-index0",
-  "controls": {
-    "brightness": {
-      "value": 0,
-      "default": 0,
-      "type": "IntegerControl",
-      "flags": [],
-      "min": -64,
-      "max": 64,
-      "step": 1
+    "path": "/dev/v4l/by-path/platform-xhci-hcd.1-usb-0:1.3:1.0-video-index0",
+    "controls": {
+      "brightness": {
+        "value": 0,
+        "default": 0,
+        "type": "IntegerControl",
+        "flags": [],
+        "min": -64,
+        "max": 64,
+        "step": 1
+      }
+    },
+    "formats": {
+      "YUYV": {
+        "3840x1080": [1],
+        "1600x600": [10, 5]
+      },
+      "MJPEG" : {
+        "3840x1080": [60, 30, 15, 10]
+      }
     }
-  },
-  "formats": {
-    "YUYV": {
-      "3840x1080": [
-        1
-      ],
-      "1600x600": [
-        10,
-        5
-      ]
-    }
-  }
 }
 ```
 
-### PATCH `/cameras/{cam_id}/controls`
+### PUT `/{cam_id}/controls`
 Update camera control values.
 
 **Parameters**:
@@ -112,28 +106,54 @@ Update camera control values.
   }
   ```
 
-**Response**: Success message or error details.
+**Response**: Updated camera data with new control values.
+```json
+{
+  "cam_id": "cam1",
+  "controls": {
+    "brightness": {
+      "value": 50,
+      "default": 0,
+      "type": "IntegerControl",
+      "flags": [],
+      "min": -64,
+      "max": 64,
+      "step": 1
+    },
+  }
+}
+```
 
-### PATCH `/cameras/{cam_id}/reset`
+### PUT `/{cam_id}/reset`
 Reset all camera controls to their default values.
 
 **Parameters**:
 - `cam_id`: Camera identifier (e.g., "cam1", "cam2")
 
-**Response**: Success message or error details.
+**Response**: Camera data with controls reset to defaults.
 
 ## Architecture
 
 ### Hardware Abstraction Layer (HAL)
 - **Camera**: Represents individual camera devices with their controls and formats
-- **CameraManager**: Handles device discovery and management
+- **CameraManager**: Handles device discovery and management  
 - **V4L2Wrapper**: Low-level interface to V4L2 devices using linuxpy
 
 ### API Layer
 - **FastAPI Application**: RESTful endpoints for camera operations
+- **Pydantic Models**: Request/response validation and serialization
+
+## Control Types
+
+The service supports various V4L2 control types:
+
+- **IntegerControl**: Numeric controls with min/max ranges (brightness, contrast, etc.)
+- **BooleanControl**: On/off controls 
+- **MenuControl**: Selection from predefined options
 
 ## Dependencies
 
 - **FastAPI**: Modern web framework for building APIs
 - **Uvicorn**: ASGI server for running FastAPI applications
 - **linuxpy**: Python interface to Linux V4L2 devices
+- **Pydantic**: Data validation and serialization

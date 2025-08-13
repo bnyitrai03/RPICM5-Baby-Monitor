@@ -1,0 +1,45 @@
+# Proxy to VCam1
+ffmpeg -f v4l2 -input_format mjpeg -framerate 30 -video_size 3840x1080 -i "/dev/v4l/by-path/platform-xhci-hcd.1-usb-0:1.1:1.0-video-index0" -c:v copy -f v4l2 /dev/video10
+
+# Split VCam1 into left and right in one command
+ffmpeg -f v4l2 -input_format mjpeg -framerate 30 -video_size 3840x1080 -i /dev/video10 \
+  -filter_complex "[0:v]split=2[left][right]; [left]crop=1920:1080:0:0[leftout]; [right]crop=1920:1080:1920:0[rightout]" \
+  -map "[leftout]" -c:v mjpeg -q:v 1 -f v4l2 /dev/video11 \
+  -map "[rightout]" -c:v mjpeg -q:v 1 -f v4l2 /dev/video12
+
+# Left side of VCam1
+ffmpeg -f v4l2 -input_format mjpeg -framerate 30 -video_size 3840x1080 -i /dev/video10 -vf "crop=1920:1080:0:0" -c:v mjpeg -q:v 1 -f v4l2 /dev/video11
+
+# Right side of VCam1
+ffmpeg -f v4l2 -input_format mjpeg -framerate 30 -video_size 3840x1080 -i /dev/video10 -vf "crop=1920:1080:1920:0" -c:v mjpeg -q:v 1 -f v4l2 /dev/video12
+
+
+# Proxy to VCam2
+ffmpeg -f v4l2 -input_format mjpeg -framerate 30 -video_size 3840x1080 -i "/dev/v4l/by-path/platform-xhci-hcd.1-usb-0:1.3:1.0-video-index0" -c:v copy -f v4l2 /dev/video14
+
+ffmpeg -f v4l2 -input_format mjpeg -framerate 30 -video_size 3840x1080 -i /dev/video14 \
+  -filter_complex "[0:v]split=2[left][right]; [left]crop=1920:1080:0:0[leftout]; [right]crop=1920:1080:1920:0[rightout]" \
+  -map "[leftout]" -c:v mjpeg -q:v 1 -f v4l2 /dev/video15 \
+  -map "[rightout]" -c:v mjpeg -q:v 1 -f v4l2 /dev/video16
+
+# Left side of VCam1
+ffmpeg -f v4l2 -input_format mjpeg -framerate 30 -video_size 3840x1080 -i /dev/video14 -vf "crop=1920:1080:0:0" -c:v mjpeg -q:v 1 -f v4l2 /dev/video15
+
+# Right side of VCam1
+ffmpeg -f v4l2 -input_format mjpeg -framerate 30 -video_size 3840x1080 -i /dev/video14 -vf "crop=1920:1080:1920:0" -c:v mjpeg -q:v 1 -f v4l2 /dev/video16
+
+# Full streams
+ustreamer -d /dev/video10 -r 3840x1080 -m MJPEG -f 30 -q 100 --slowdown --host 127.0.0.1 --port 8003 --tcp-nodelay
+ustreamer -d /dev/video14 -r 3840x1080 -m MJPEG -f 30 -q 100 --slowdown --host 127.0.0.1 --port 8004 --tcp-nodelay
+
+# Camera Right 1
+ustreamer -d /dev/video11 -r 1920x1080 -m MJPEG -f 30 -q 100 --slowdown --host 127.0.0.1 --port 8003 --tcp-nodelay
+
+# Camera Left 1
+ustreamer -d /dev/video12 -r 1920x1080 -m MJPEG -f 30 -q 100 --slowdown --host 127.0.0.1 --port 8004 --tcp-nodelay
+
+# Camera Right 2
+ustreamer -d /dev/video15 -r 1920x1080 -m MJPEG -f 30 -q 100 --slowdown --host 127.0.0.1 --port 8005 --tcp-nodelay
+
+# Camera Left 2
+ustreamer -d /dev/video16 -r 1920x1080 -m MJPEG -f 30 -q 100 --slowdown --host 127.0.0.1 --port 8006 --tcp-nodelay

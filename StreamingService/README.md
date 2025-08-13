@@ -6,7 +6,7 @@ A FastAPI-based camera streaming service that manages V4L2 stereo camera setups.
 
 - **Stereo camera processing**: Automatically splits stereo feeds into mono streams
 - **Video pipeline management**: Manages ffmpeg and ustreamer processes for streaming
-- **REST API**: Simple HTTP endpoints for stream control
+- **REST API**: Simple HTTPS endpoints for stream control
 
 ## Architecture
 
@@ -22,7 +22,7 @@ For each camera stream, the service creates a 3-stage pipeline:
 
 1. **Proxy Stage**: ffmpeg captures raw MJPEG from camera and forwards to virtual device
 2. **Split Stage**: ffmpeg crops stereo feed to mono (left or right eye)
-3. **Stream Stage**: ustreamer serves the processed video over HTTP
+3. **Stream Stage**: ustreamer serves the processed video over HTTPS
 
 ## Usage
 
@@ -44,7 +44,7 @@ Start a camera stream with specified settings.
 ```json
 {
   "cam": "caml1",
-  "cam_path": "/dev/v4l/by-id/usb-3D_USB_Camera_3D_USB_Camera_01.00.00-video-index0",
+  "cam_path": "/dev/v4l/by-path/platform-xhci-hcd.1-usb-0:1.1:1.0-video-index0",
   "fps": 30,
   "width": 3840,
   "height": 1080
@@ -53,7 +53,7 @@ Start a camera stream with specified settings.
 
 **Response:**
 ```json
-"http://rpicm5/stream/caml1/stream"
+"http://{HOSTNAME}/stream/caml1/stream"
 ```
 
 #### Stop Stream

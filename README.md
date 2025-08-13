@@ -6,15 +6,17 @@ This document provides a comprehensive collection of API endpoints across three 
 
 | Service | Port | Base URL | Description |
 |---------|------|----------|-------------|
-| **SensorService** | 8001 | `https://rpicm5/sensors` | Temperature and light sensor monitoring |
-| **CameraManagerService** | 8000 | `https://rpicm5/cameras` | V4L2 camera discovery and configuration |
-| **StreamingService** | 8002 | `https://rpicm5/stream/config` | Camera streaming management |
+| **CameraManagerService** | 8000 | `https://{HOSTNAME}/cameras` | V4L2 camera discovery and configuration |
+| **SensorService** | 8001 | `https://{HOSTNAME}/sensors` | Temperature and light sensor monitoring |
+| **StreamingService** | 8002 | `https://{HOSTNAME}/stream/config` | Camera streaming management |
 
 ---
 
+All services are accessible through **nginx** proxy at `https://{HOSTNAME}/`.
+
 ## SensorService Endpoints
 
-**Base URL:** `https://rpicm5/sensors`
+**Base URL:** `https://{HOSTNAME}/sensors`
 
 ### GET `/`
 Get current sensor readings and configuration.
@@ -25,7 +27,8 @@ Get current sensor readings and configuration.
   "lux_value": 245.6,
   "temp_value": 23.45,
   "lux_threshold": 100,
-  "timestamp": "2025-01-15T14:30:25.123456"
+  "led_brightness": 0.5,
+  "timestamp": "2025-08-15T14:30:25.123456"
 }
 ```
 
@@ -41,16 +44,31 @@ Update the light threshold value for LED control.
 
 **Response:**
 ```json
-"Threshold set"
+"Lux threshold set to 150"
+```
+
+#### PUT /led_brightness
+Updates the LED brightness level (0.0 to 1.0).
+
+**Request Body:**
+```json
+{
+  "brightness": 0.8
+}
+```
+
+**Response:**
+```json
+"LED brightness set to 0.8"
 ```
 
 ---
 
 ## CameraManagerService Endpoints
 
-**Base URL:** `https://rpicm5/cameras`
+**Base URL:** `https://{HOSTNAME}/cameras`
 
-### GET `/cameras`
+### GET `/`
 List all connected cameras with their full capabilities.
 
 **Response:**
@@ -58,7 +76,7 @@ List all connected cameras with their full capabilities.
 [
   {
     "id": "cam1",
-    "name": "platform-xhci-hcd.1-usb-0:1.3:1.0-video-index0",
+    "path": "/dev/v4l/by-path/platform-xhci-hcd.1-usb-0:1.3:1.0-video-index0",
     "controls": {
       "brightness": {
         "value": 0,
@@ -102,7 +120,7 @@ Get detailed information for a specific camera.
 ```json
 {
   "id": "cam1",
-  "name": "platform-xhci-hcd.1-usb-0:1.3:1.0-video-index0",
+  "path": "/dev/v4l/by-path/platform-xhci-hcd.1-usb-0:1.3:1.0-video-index0",
   "controls": {
     "brightness": {
       "value": 0,
@@ -145,7 +163,18 @@ Update camera control values.
 **Response:**
 ```json
 {
-  "message": "Controls updated successfully"
+  "cam_id": "cam1",
+  "controls": {
+    "brightness": {
+      "value": 50,
+      "default": 0,
+      "type": "IntegerControl",
+      "flags": [],
+      "min": -64,
+      "max": 64,
+      "step": 1
+    },
+  }
 }
 ```
 
@@ -155,18 +184,13 @@ Reset all camera controls to their default values.
 **Parameters:**
 - `cam_id` (path): Camera identifier
 
-**Response:**
-```json
-{
-  "message": "Camera controls reset to defaults"
-}
-```
+**Response:** Camera data with controls reset to defaults.
 
 ---
 
 ## StreamingService Endpoints
 
-**Base URL:** `https://rpicm5/stream/config`
+**Base URL:** `https://{HOSTNAME}/stream/config`
 
 ### POST `/start`
 Start a camera stream with specified settings.
@@ -175,7 +199,7 @@ Start a camera stream with specified settings.
 ```json
 {
   "cam": "caml1",
-  "cam_path": "/dev/v4l/by-id/usb-3D_USB_Camera_3D_USB_Camera_01.00.00-video-index0",
+  "cam_path": "/dev/v4l/by-path/platform-xhci-hcd.1-usb-0:1.1:1.0-video-index0",
   "fps": 30,
   "width": 3840,
   "height": 1080
@@ -184,7 +208,7 @@ Start a camera stream with specified settings.
 
 **Response:**
 ```json
-"https://rpicm5/stream/caml1/stream"
+"https://{HOSTNAME}/stream/caml1/stream"
 ```
 
 ### PUT `/stop`
@@ -211,13 +235,13 @@ Stop the currently running stream.
 ### Stream Access URLs
 After starting a stream, access the video feed at:
 ```
-https://rpicm5/stream/{camera_id}/stream
+https://{HOSTNAME}/stream/{camera_id}/stream
 ```
 
 Examples:
-- `https://rpicm5/stream/caml1/stream`
-- `https://rpicm5/stream/camr1/stream`
-- `https://rpicm5/stream/caml2/stream`
-- `https://rpicm5/stream/camr2/stream`
+- `https://{HOSTNAME}/stream/caml1/stream`
+- `https://{HOSTNAME}/stream/camr1/stream`
+- `https://{HOSTNAME}/stream/caml2/stream`
+- `https://{HOSTNAME}/stream/camr2/stream`
 
 ---
